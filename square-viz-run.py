@@ -12,7 +12,7 @@ import cv2
 
 from visualization.visualization import Visualization
 
-from roi_manip import convert_to_contours
+from helpers.roi_manip import convert_to_contours
 
 from helpers.centroid_manip import generate_row_col
 import pandas as pd

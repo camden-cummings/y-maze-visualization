@@ -1,14 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov  8 11:49:10 2024
-
-@author: chamomile
-"""
+""""""
 from collections import Counter
 
 import numpy as np
 import pandas as pd
+
+from visualization.helpers.generate_row_col import generate_row_col
 
 class TetragramAnalysis:
     """"""
@@ -17,110 +13,74 @@ class TetragramAnalysis:
         self.shape_of_rows = shape_of_rows
         self.arm_analysis = arm_analysis
         self.turn_map = self.create_turn_map(tracked_csv_filename, arm_output_filepath, output_filepath)
-        
-    def create_arm_list(self, output_filepath: str):
-        """Like mice data, w/ % spontaneous alternation instead of tetragrams."""
-        # even_or_odd = self.decide_even_or_odd(contour_of_cells, center_of_ys, horizontal)
-
-        num_of_ys = self.num_rows*self.num_cols
-
-        df = pd.read_csv(output_filepath)
-        df.head()
-
-        arm_list = [[[] for i in range(self.num_cols)] for j in range(self.num_rows)]
-        just_the_hits_arm_list = [[[] for i in range(self.num_cols)] for j in range(self.num_rows)]
-        for row in range(self.num_rows):
-            for col in range(self.num_cols):
-                for z in range(0, int(len(df) / num_of_ys) - len(df) % num_of_ys - 1):
-
-                    y_count = row * self.num_cols + col
-                    indic = [y_count + z * num_of_ys,
-                             y_count + z * num_of_ys + num_of_ys]
-
-                    prev = self.arm_analysis.convert_to_arm(df['pos_x'][indic[0]], df['pos_y'][indic[0]],
-                                               row, col)
-                    curr = self.arm_analysis.convert_to_arm(df['pos_x'][indic[1]], df['pos_y'][indic[1]],
-                                               row, col)
-
-                    arm_list[row][col].append(str(prev))
-
-                    if prev is not curr and prev is not None:
-                        just_the_hits_arm_list[row][col].append(str(prev))
-
-        return arm_list, just_the_hits_arm_list
 
     def create_turn_map(self, tracked_csv_filename: str, arm_output_filepath=None, output_filepath=None):
         """Create turn map (LRLRRL..) based on arm turns."""
 
-        num_of_ys = sum(self.shape_of_rows)
-        
         df = pd.read_csv(tracked_csv_filename)
         df.head()
 
+        num_of_ys = sum(self.shape_of_rows)
         num_rows = len(self.shape_of_rows)
-        LR = [[] for j in range(num_rows)]
 
-        post_final_frame = len(df)
-        
+        turn_map = [[] for row in range(num_rows)]
+
         if output_filepath:
             save_df = []
         if arm_output_filepath:
             save_arm_df = []
-        
-        for row in range(num_rows):
-            num_cols = self.shape_of_rows[row]
-            for col in range(num_cols):
-                y_count = row * num_cols + col
 
-                keep_ = None
+        for row, col in generate_row_col(self.shape_of_rows):
+            y_count = row * self.shape_of_rows[row] + col
 
-                all_in_col = ""
-                
-                for z in range(0, int(len(df) / num_of_ys) - len(df) % num_of_ys - 1):
-                    indic = [y_count + z * num_of_ys,
-                             y_count + z * num_of_ys + num_of_ys]
+            keep_ = None
 
-                    prev = self.arm_analysis.convert_to_arm(df['pos_x'][indic[0]],
-                                               df['pos_y'][indic[0]],
-                                               row, col)
-                    curr = self.arm_analysis.convert_to_arm(df['pos_x'][indic[1]],
-                                               df['pos_y'][indic[1]],
-                                               row, col)
-                    
-                    if arm_output_filepath:
-                        save_arm_df.append([row, col, str(prev), df['frame'][indic[1]]])
-                    
-                    if prev is not curr:
-                        if prev is None and keep_ is not curr and keep_ is not None:
-                            turn = self.turn_l_r(keep_, curr)
-                            all_in_col += turn
-                            
-                            if output_filepath: 
-                                save_df.append([row, col, turn, df['frame'][indic[1]]])
-                                
-                        if curr is None:
-                            keep_ = prev
+            all_in_col = ""
 
-                        if prev is not None and curr is not None:
-                            turn = self.turn_l_r(prev, curr)
-                            all_in_col += turn
-                            
-                            if output_filepath:
-                                save_df.append([row, col, turn, df['frame'][indic[1]]])
-                         
-                LR[row].append(all_in_col)
-                all_in_col = ""
-                
+            for z in range(0, int(len(df) / num_of_ys) - len(df) % num_of_ys - 1):
+                indic = [y_count + z * num_of_ys,
+                         y_count + z * num_of_ys + num_of_ys]
+
+                prev = self.arm_analysis.convert_to_arm(df['pos_x'][indic[0]],
+                                           df['pos_y'][indic[0]],
+                                           row, col)
+                curr = self.arm_analysis.convert_to_arm(df['pos_x'][indic[1]],
+                                           df['pos_y'][indic[1]],
+                                           row, col)
+
+                if arm_output_filepath:
+                    save_arm_df.append([row, col, str(prev), df['frame'][indic[1]]])
+
+                if prev is not curr:
+                    if prev is None and keep_ is not curr and keep_ is not None:
+                        turn = self.turn_l_r(keep_, curr)
+                        all_in_col += turn
+
+                        if output_filepath:
+                            save_df.append([row, col, turn, df['frame'][indic[1]]])
+
+                    if curr is None:
+                        keep_ = prev
+
+                    if prev is not None and curr is not None:
+                        turn = self.turn_l_r(prev, curr)
+                        all_in_col += turn
+
+                        if output_filepath:
+                            save_df.append([row, col, turn, df['frame'][indic[1]]])
+
+            turn_map[row].append(all_in_col)
+
         if arm_output_filepath:
             save_arm_df = pd.DataFrame(np.matrix(save_arm_df), columns=['row', 'col', 'arm', 'frame'])
             save_arm_df.to_csv(arm_output_filepath, sep=',')
-            
+
         if output_filepath:
             save_df = pd.DataFrame(np.matrix(save_df), columns=['row', 'col', 'turn', 'frame'])
             save_df.to_csv(output_filepath, sep=',')
-            
-        return LR
-    
+
+        return turn_map
+
     """
     @staticmethod
     def match_threes(l):
@@ -136,7 +96,36 @@ class TetragramAnalysis:
 
         return sets_of_three
     """
-    
+
+    def create_arm_list(self, output_filepath: str):
+        """Like mice data, w/ % spontaneous alternation instead of tetragrams."""
+
+        df = pd.read_csv(output_filepath)
+        df.head()
+
+        num_rows = len(self.shape_of_rows)
+        num_of_ys = sum(self.shape_of_rows)
+
+        arm_list = [[[] for col in range(self.shape_of_rows[row])] for row in range(num_rows)]
+        just_the_hits_arm_list = [[[] for col in range(self.shape_of_rows[row])] for row in range(num_rows)]
+        for row, col in generate_row_col(self.shape_of_rows):
+            for z in range(0, int(len(df) / num_of_ys) - len(df) % num_of_ys - 1):
+                y_count = row * self.shape_of_rows[row] + col
+                indic = [y_count + z * num_of_ys,
+                         y_count + z * num_of_ys + num_of_ys]
+
+                prev = self.arm_analysis.convert_to_arm(df['pos_x'][indic[0]], df['pos_y'][indic[0]],
+                                           row, col)
+                curr = self.arm_analysis.convert_to_arm(df['pos_x'][indic[1]], df['pos_y'][indic[1]],
+                                           row, col)
+
+                arm_list[row][col].append(str(prev))
+
+                if prev is not curr and prev is not None:
+                    just_the_hits_arm_list[row][col].append(str(prev))
+
+        return arm_list, just_the_hits_arm_list
+
     @staticmethod
     def spontaneous_alternation_percent(l):
         """Calculates the spontaneous alternation percent for a given pattern."""
@@ -149,7 +138,6 @@ class TetragramAnalysis:
                 count += 1
 
         return (len(l) - count) / len(l)
-
 
     def match(self, turn_map_indiv, number_of_divisions):
         """
@@ -164,17 +152,14 @@ class TetragramAnalysis:
 
         return grouped
 
-
     def match_for_row_and_col(self, turn_map, number_of_divisions):
         """Run match for each of the cells."""
         grouped = []
 
         num_rows = len(self.shape_of_rows)
-        for row in range(num_rows):
-            num_cols = self.shape_of_rows[row]
-            for col in range(num_cols):
-                l = turn_map[row][col]
-                grouped.extend(self.match(l, number_of_divisions))
+        for row, col in generate_row_col(self.shape_of_rows):
+            l = turn_map[row][col]
+            grouped.extend(self.match(l, number_of_divisions))
 
         return grouped
 

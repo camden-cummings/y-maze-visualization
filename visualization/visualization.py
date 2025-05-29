@@ -8,7 +8,6 @@ import numpy as np
 
 import seaborn as sns
 
-
 class Visualization:
     """Visualizes."""
 
