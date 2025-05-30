@@ -64,8 +64,8 @@ class ArmAnalysis:
                     right_half.append(point)
                     # cv2.circle(mode_blur_img, point, 1, (0, 0, 255), 5, cv2.LINE_4)
 
-        right_half.append(self.y_centers[int(cell_num / num_cols)][cell_num % num_cols])
-        left_half.append(self.y_centers[int(cell_num / num_cols)][cell_num % num_cols])
+        right_half.append(self.y_centers[which_row][cell_num % num_cols])
+        left_half.append(self.y_centers[which_row][cell_num % num_cols])
 
         # cv2.imshow('f',mode_blur_img)
         # cv2.waitKey(0)
@@ -76,7 +76,8 @@ class ArmAnalysis:
         print("Y has two arms right")
         return 1
 
-    def find_closest_three(self, contour, center):
+    @staticmethod
+    def find_closest_three(contour, center):
         all_contour_pts = []
         for c in contour:
             all_contour_pts.append([c, math.dist(c, center)])

@@ -156,7 +156,6 @@ class TetragramAnalysis:
         """Run match for each of the cells."""
         grouped = []
 
-        num_rows = len(self.shape_of_rows)
         for row, col in generate_row_col(self.shape_of_rows):
             l = turn_map[row][col]
             grouped.extend(self.match(l, number_of_divisions))
