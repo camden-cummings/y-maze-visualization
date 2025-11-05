@@ -5,23 +5,17 @@ Created on Tue Nov 19 06:38:29 2024
 
 @author: chamomile
 """
-from pathlib import Path, PurePath
 import re
+from collections import Counter
+from pathlib import Path, PurePath
 
 import cv2
-
-from visualization.visualization import Visualization
-
-from helpers.roi_manip import convert_to_contours
-
-from helpers.centroid_manip import generate_row_col
+import numpy as np
 import pandas as pd
 
-from collections import Counter
-
-import numpy as np
-
-#filepath = '/home/chamomile/Thyme-lab/data/hpc/csv/'
+from visualization.visualization.helpers.generate_row_col import generate_row_col
+from visualization.visualization.helpers.roi_manip import convert_to_contours
+from visualization.visualization import Visualization
 
 filepath = "/home/chamomile/Thyme-lab/data/vids/social_and_many_well/"
 
@@ -70,11 +64,10 @@ def match_sets_of_four(self, turn_map):
     sets_of_four = []
 
     num_rows = len(shape_of_rows)
-    for row in range(num_rows):
-        num_cols = shape_of_rows[row]
-        for col in range(num_cols):
-            l = turn_map[row][col]
-            sets_of_four.extend(match(l))
+
+    for row, col in generate_row_col(shape_of_rows):
+        l = turn_map[row][col]
+        sets_of_four.extend(match(l))
 
     return sets_of_four
 
@@ -136,60 +129,56 @@ def create_turn_map(output_filepath: str):
     print(df)
     LR = [[] for j in range(num_rows)]
 
-    for row in range(num_rows):
-        num_cols = shape_of_rows[row]
-        for col in range(num_cols):
-            keep_ = None
+    for row, col in generate_row_col(shape_of_rows):
+        keep_ = None
 
-            all_in_col = ""
-            for z in range(0, int(len(df) / num_of_ys) - len(df) % num_of_ys - 1):
-                y_count = row * num_cols + col
-                indic = [y_count + z * num_of_ys,
-                         y_count + z * num_of_ys + num_of_ys]
+        all_in_col = ""
+        for z in range(0, int(len(df) / num_of_ys) - len(df) % num_of_ys - 1):
+            y_count = row * shape_of_rows[row] + col
+            indic = [y_count + z * num_of_ys,
+                     y_count + z * num_of_ys + num_of_ys]
 
-                prev = convert_to_quadrant(df['pos_x'][indic[0]],
-                                           df['pos_y'][indic[0]],
-                                           row, col)
+            prev = convert_to_quadrant(df['pos_x'][indic[0]],
+                                       df['pos_y'][indic[0]],
+                                       row, col)
 
-                curr = convert_to_quadrant(df['pos_x'][indic[1]],
-                                           df['pos_y'][indic[1]],
-                                           row, col)
+            curr = convert_to_quadrant(df['pos_x'][indic[1]],
+                                       df['pos_y'][indic[1]],
+                                       row, col)
 
-                if prev is not curr:
-                    if prev is None and keep_ is not curr and keep_ is not None:
-                        all_in_col += turn_l_r(keep_, curr)
+            if prev is not curr:
+                if prev is None and keep_ is not curr and keep_ is not None:
+                    all_in_col += turn_l_r(keep_, curr)
 
-                    if curr is None:
-                        keep_ = prev
+                if curr is None:
+                    keep_ = prev
 
-                    if prev is not None and curr is not None:
-                        all_in_col += turn_l_r(prev, curr)
-                        
-                
-            LR[row].append(all_in_col)
-            all_in_col = ""
-            
+                if prev is not None and curr is not None:
+                    all_in_col += turn_l_r(prev, curr)
+
+
+        LR[row].append(all_in_col)
+
     return LR
 
 for row, col in generate_row_col(shape_of_rows):
     cv2.circle(mode_noblur_img, cell_centers[row][col], 2, (0, 0, 0), 2, cv2.LINE_4)
     cell_count = row * shape_of_rows[row] + col
 
-    for point in cell_contours[cell_count]:        
+    for point in cell_contours[cell_count]:
         cv2.putText(mode_noblur_img, str(convert_to_quadrant(point[0], point[1], row, col)), point, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
-        
+
 
 turn_map = create_turn_map(data_fp)
 
-for row in range(num_rows):
-    num_cols = shape_of_rows[row]
-    for col in range(num_cols):
-        sets_of_four = match(turn_map[row][col])
-        percent = count(sets_of_four)
-        print(turn_map[row][col])
-        print(percent)       
-        #v.indiv_fish_plot(percent)
-        v.indiv_bar_graph(percent, data_fp[:-18]+"_"+str(row)+"_"+str(col)+".png", 0)
+for row, col in generate_row_col(shape_of_rows):
+    sets_of_four = match(turn_map[row][col])
+    percent = count(sets_of_four)
+    print(turn_map[row][col])
+    print(percent)
+    #v.indiv_fish_plot(percent)
+    v.indiv_bar_graph(percent, data_fp[:-18]+"_"+str(row)+"_"+str(col)+".png", row=row, col=col)
+
 """
 counter = 0
 
@@ -273,5 +262,6 @@ while cont:
     if cv2.waitKey(int(1000 * (1 / vidcap.get(cv2.CAP_PROP_FRAME_COUNT)))) & 0xFF == ord('q'):
         break
 
-"""
+
 vidcap.release()
+"""

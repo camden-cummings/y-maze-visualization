@@ -99,7 +99,6 @@ class TetragramAnalysis:
 
     def create_arm_list(self, output_filepath: str):
         """Like mice data, w/ % spontaneous alternation instead of tetragrams."""
-
         df = pd.read_csv(output_filepath)
         df.head()
 
@@ -150,6 +149,8 @@ class TetragramAnalysis:
         for i in range(0, len(turn_map_indiv) - (number_of_divisions - 1)):
             grouped.append(turn_map_indiv[i:i + number_of_divisions])
 
+#        print(np.split(turn_map_indiv, number_of_divisions))
+#        print(grouped)
         return grouped
 
     def match_for_row_and_col(self, turn_map, number_of_divisions):
@@ -187,7 +188,10 @@ class TetragramAnalysis:
                 if val in l:
                     combin_counter[l] += counter[val]
 
-        percent = 100 * np.array(list(combin_counter.values())
-                                 ) / sum(combin_counter.values())
+        if sum(combin_counter.values()) != 0:
+            percent = 100 * np.array(list(combin_counter.values())
+                                     ) / sum(combin_counter.values())
+        else:
+            percent = np.array([0 for i in range(len(self.labels))], dtype=np.float64)
 
         return percent

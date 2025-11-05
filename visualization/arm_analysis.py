@@ -21,6 +21,8 @@ class ArmAnalysis:
                 ycount = row * shape_of_rows[row] + col
                 self.cell_direction[row][col] = self.cell_direction_finder(ycount)
 
+        self.arms = self.find_all_arms(self.triangles, self.cell_direction)
+
     def cell_direction_finder(self, cell_num):
         """Deciding if each cell is in an even row/col or an odd one."""
         upper_half = []
@@ -96,6 +98,112 @@ class ArmAnalysis:
 
         return triangles
 
+    def point_in_arr(self, arr, pt):
+        for arr_pt in arr:
+            print(arr_pt, pt)
+            if all(pt == arr_pt):
+                return True
+        else:
+            return False
+
+    def find_all_arms(self, triangles, cell_direction): # TODO: do this as TSP instead
+        arms = [[[] for col in range(self.shape_of_rows[row])] for row in range(len(self.shape_of_rows))]
+        for row in range(len(self.shape_of_rows)):
+            for col in range(self.shape_of_rows[row]):
+                ycount = row * self.shape_of_rows[row] + col
+
+                dir = cell_direction[row][col]
+                print(dir)
+                tri = triangles[row][col]
+                center = self.y_centers[row][col]
+                all_pts = self.y_contours[ycount]
+
+                if dir == 0: # 2 arms U
+                    down = sorted([point for point in all_pts if point[1] > center[1] and point[0] < center[0]], key=lambda z: z[1])
+                    down.extend(sorted([point for point in all_pts if point[1] > center[1] and point[0] > center[0]], key=lambda z: z[1], reverse=True))
+
+                    right = []
+
+                    for point in tri:
+                        if point[0] > center[0] and point[1] > center[1]:
+                            right.append(np.array(point))
+
+                    for point in tri:
+                        if point[1] < center[1]:
+                            right.append(np.array(point))
+
+                    right.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] < center[1]], key=lambda z: z[1]))
+
+                    left = []
+                    for point in tri:
+                        if point[0] < center[0] and point[1] > center[1]:
+                            left.append(np.array(point))
+
+                    for point in tri:
+                        if point[1] < center[1]:
+                            left.append(np.array(point))
+
+                    left.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] < center[1] and not self.point_in_arr(left, point)], key=lambda z: z[1]))
+
+                    arms[row][col] = Polygon(down), Polygon(right), Polygon(left)
+
+                elif dir == 1: # 2 arms
+                    up = sorted([point for point in all_pts if point[1] < center[1] and point[0] < center[0]], key=lambda z: z[1])
+                    up.extend(sorted([point for point in all_pts if point[1] < center[1] and point[0] > center[0]], key=lambda z: z[1], reverse=True))
+
+                    right = []
+                    for point in tri:
+                        if point[1] > center[1]:
+                            right.append(np.array(point))
+
+                    for point in tri:
+                        if point[0] < center[0] and point[1] < center[1]:
+                            right.append(np.array(point))
+
+                    right.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] > center[1] and not self.point_in_arr(right, point)], key=lambda z:z[1]))
+
+                    left = []
+                    for point in tri:
+                        if point[1] > center[1]:
+                            left.append(np.array(point))
+
+                    for point in tri:
+                        if point[0] > center[0] and point[1] < center[1]:
+                            left.append(np.array(point))
+
+                    left.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] > center[1]], key=lambda z:z[1]))
+
+                    arms[row][col] = Polygon(up), Polygon(right), Polygon(left)
+
+                elif dir == 2:  # 2 arms R
+                    left = sorted([point for point in all_pts if point[0] < center[0] and point[1] < center[1]], key=lambda z: z[0])
+                    left.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] > center[1]], key=lambda z:z[0], reverse=True))
+
+                    up = []
+                    for point in tri:
+                        if point[0] > center[0]:
+                            up.append(np.array(point))
+                    for point in tri:
+                        if (point[0] < center[0] and point[1] < center[1]):
+                            up.append(np.array(point))
+
+                    up.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] < center[1] and not self.point_in_arr(up, point)], key=lambda z: z[0]))
+
+                    below = []
+                    for point in tri:
+                        if point[0] > center[0]:
+                            below.append(np.array(point))
+                    for point in tri:
+                        if (point[0] < center[0] and point[1] > center[1]):
+                            below.append(np.array(point))
+
+                    below.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] > center[1] and not self.point_in_arr(below, point)], key=lambda z: z[0]))
+
+                    arms[row][col] = Polygon(left), Polygon(up), Polygon(below)
+                elif dir == 3: # 2 arms L
+                    pass
+        return arms
+
     def convert_to_arm(self, pos_x: int, pos_y: int, row: int, col: int):
         """
         Spits out which arm the fish is currently in.
@@ -127,26 +235,31 @@ class ArmAnalysis:
 
         dir = self.cell_direction[row][col]
         if dir == 0: #U
-            if pos_y - self.y_centers[row][col][1] > 0:  # top
-                return 0
-            elif pos_x - self.y_centers[row][col][0] < 0:
+            down, right, left = self.arms[row][col]
+            if pt.within(down):
                 return 1
-            else:
+            elif pt.within(right):
+                return 0
+            elif pt.within(left):
                 return 2
         elif dir == 1: #D
-            if pos_y - self.y_centers[row][col][1] < 0:  # bottom
-                return 0
-            elif pos_x - self.y_centers[row][col][0] < 0:
+            up, right, left = self.arms[row][col]
+            if pt.within(up):
                 return 2
-            else:
+            elif pt.within(right):
+                return 0
+            elif pt.within(left):
                 return 1
         elif dir == 2: #R
-            if pos_x - self.y_centers[row][col][0] < 0:  # left side of y
+            left, up, below = self.arms[row][col]
+            if pt.within(left):
+                return 2
+            elif pt.within(up):
                 return 0
-            elif pos_y - self.y_centers[row][col][1] > 0:  # top
+            elif pt.within(below):
                 return 1
             else:
-                return 2
+                return -1
         elif dir == 3: #L
             if pos_x - self.y_centers[row][col][0] > 0:  # right side of y
                 return 0

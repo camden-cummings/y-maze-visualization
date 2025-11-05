@@ -1,15 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-from helpers.file_manip import find_all_files
-
-from visualization.visualization import Visualization
-
+import os
 from collections import Counter
 
-import os
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from visualization.visualization.helpers.file_manip import find_all_files
+from visualization.visualization import Visualization
 
 filepath = "/home/chamomile/Thyme-lab/data/vids/brandon-data/reorg_data"
 

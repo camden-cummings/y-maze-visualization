@@ -61,9 +61,8 @@ class Visualization:
             colour_list = colour_list[:-1]
         return colour_list
 
-    def paired_tetragram(self, percent, age):
+    def paired_tetragram(self, percent, age, filepath):
         """Paired tetragram graph."""
-        x_ticks = range(len(self.labels))
 
         _, ax = plt.subplots()
 
@@ -71,13 +70,16 @@ class Visualization:
         plt.ylabel("Paired Tetragram")
         plt.title('Frequency of Paired Tetragram - ' + age)
 
-        plt.yticks(ha='right', ticks=x_ticks, labels=self.labels)
+        y_ticks = range(len(self.labels))
+
+        plt.yticks(ha='right', ticks=y_ticks, labels=self.labels)
         plt.xlim((0, 100))
 
         for i, label in enumerate(percent):
-            ax.text(percent[i] + 2, x_ticks[i] - 0.1, label)
+            ax.text(percent[i] + 2, y_ticks[i] - 0.1, label)
 
-        plt.plot(percent, x_ticks, marker='o')
+        plt.plot(percent, y_ticks, marker='o')
+        plt.savefig(filepath)
         plt.show()
 
     def indiv_bar_graph(self, percent, filepath, row, col, age=None, num_of_tetragrams=None):
@@ -103,7 +105,7 @@ class Visualization:
 
         ax.bar(np.arange(0, len(self.labels)), percent, 0.1)
 
-        # plt.show() # uncomment to show as program is run
+        #plt.show() # uncomment to show as program is run
         plt.savefig(filepath)
         plt.close()
 
@@ -144,8 +146,41 @@ class Visualization:
                       self.all_16_labels, rotation=30, ha='right')
 
         ax.legend(loc='upper left')
-        ax.set_ylim(0, 40)
+        ax.set_ylim(0, 100)
         plt.show()
+
+    def paired_tetragram_bar_percent(self, percent: dict, sample_size: dict, filepath):
+        """Paired tetragram bar graph."""
+
+        width = 0.1  # the width of the bars
+        multiplier = 0
+
+        _, ax = plt.subplots(layout='constrained', figsize=(17, 3))
+
+        for attribute, measurement in percent.items():
+            print(attribute, measurement)
+            offset = width * multiplier
+            adj = -0.1 * (float(len(percent))/2)
+
+            ax.bar(np.arange(adj, len(self.labels)+adj) + offset,
+                   measurement,  width,
+                   label=attribute + f" (n = {sample_size[attribute]})",
+                   color=self.colours[attribute])
+
+            multiplier += 1
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_xlabel("Paired Tetragram")
+        ax.set_ylabel("% of Total")
+        ax.set_title('Frequency of Paired Tetragram')
+        ax.set_xticks(np.arange(0, len(self.labels)),
+                      self.labels, rotation=30, ha='right')
+
+        ax.legend(loc='upper left')
+        ax.set_ylim(0, 100)
+        plt.savefig(filepath)
+        plt.close()
+#        plt.show()
 
     def indiv_fish_plot(self, percents: dict):
         """Create a plot of an individual fish."""

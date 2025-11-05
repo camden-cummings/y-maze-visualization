@@ -50,7 +50,7 @@ def convert_to_contours(cell_filename):
     
     #sorting by row  ------------------------
     for i in range(0, len(centers)):
-        if centers[i][0][1] - centers[i-1][0][1] > 30:        
+        if centers[i][0][1] - centers[i-1][0][1] > 40:
             row += 1
             curr_row.sort(key=lambda tup: tup[0][0])
             reorg_centers.append(curr_row.copy())
@@ -82,6 +82,18 @@ def convert_to_contours(cell_filename):
 
     
     return cell_contours, cell_centers, shape_of_rows
+
+def get_contour_mask(cell_contours, frame_width, frame_height):
+    contour_mask = np.zeros((frame_height, frame_width, 3))
+
+    for c in cell_contours:
+        contour_mask = cv2.drawContours(contour_mask, [c],
+                                        -1, (255, 255, 255), thickness=cv2.FILLED)
+
+    contour_mask = cv2.cvtColor(
+        np.array(contour_mask, dtype=np.uint8), cv2.COLOR_BGR2GRAY)
+
+    return contour_mask
 
 def find_centroid_of_contour(contour):
     """Given a contour, finds centroid of it."""
