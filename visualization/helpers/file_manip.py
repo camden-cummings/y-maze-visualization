@@ -58,7 +58,7 @@ def find_all_files_by_directory(path=None, extension=""):
     new_section = [files_to_read[0]]
 
     for f_num in range(len(files_to_read)-1):
-        if (files_to_read[f_num].split("-")[-3] == files_to_read[f_num+1].split("-")[-3]):
+        if files_to_read[f_num].split("-")[-3] == files_to_read[f_num + 1].split("-")[-3]:
             new_section.append(files_to_read[f_num+1])
         else:
             rearr_files.append(new_section)

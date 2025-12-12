@@ -138,7 +138,8 @@ class TetragramAnalysis:
 
         return (len(l) - count) / len(l)
 
-    def match(self, turn_map_indiv, number_of_divisions):
+    @staticmethod
+    def match(turn_map_indiv, number_of_divisions):
         """
         Pair set of movements into sets of number_of_divisions, i.e. if number_of_divisions is
         3, and LRLLRL is the string, will produce (LRL, RLL, LLR, LRL).
@@ -149,8 +150,6 @@ class TetragramAnalysis:
         for i in range(0, len(turn_map_indiv) - (number_of_divisions - 1)):
             grouped.append(turn_map_indiv[i:i + number_of_divisions])
 
-#        print(np.split(turn_map_indiv, number_of_divisions))
-#        print(grouped)
         return grouped
 
     def match_for_row_and_col(self, turn_map, number_of_divisions):
@@ -166,13 +165,16 @@ class TetragramAnalysis:
     @staticmethod
     def turn_l_r(prev_arm: int, curr_arm: int) -> str:
         """Decides if moving from previous arm to current arm was turning left or turning right."""
-        if (prev_arm, curr_arm) == (0, 2):
-            return "L"
+        if prev_arm == curr_arm:
+            return ""
 
-        elif (prev_arm, curr_arm) == (2, 0):
+        if (prev_arm, curr_arm) == (0, 2):
             return "R"
 
-        elif prev_arm < curr_arm:
+        elif (prev_arm, curr_arm) == (2, 0):
+            return "L"
+
+        elif prev_arm > curr_arm:
             return "R"
 
         else:

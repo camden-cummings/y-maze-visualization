@@ -106,19 +106,19 @@ class ArmAnalysis:
         else:
             return False
 
-    def find_all_arms(self, triangles, cell_direction): # TODO: do this as TSP instead
+    def find_all_arms(self, triangles, cell_directions): # TODO: do this as TSP instead
         arms = [[[] for col in range(self.shape_of_rows[row])] for row in range(len(self.shape_of_rows))]
         for row in range(len(self.shape_of_rows)):
             for col in range(self.shape_of_rows[row]):
                 ycount = row * self.shape_of_rows[row] + col
 
-                dir = cell_direction[row][col]
-                print(dir)
+                cell_dir = cell_directions[row][col]
+                print(cell_dir)
                 tri = triangles[row][col]
                 center = self.y_centers[row][col]
                 all_pts = self.y_contours[ycount]
 
-                if dir == 0: # 2 arms U
+                if cell_dir == 0: # 2 arms U
                     down = sorted([point for point in all_pts if point[1] > center[1] and point[0] < center[0]], key=lambda z: z[1])
                     down.extend(sorted([point for point in all_pts if point[1] > center[1] and point[0] > center[0]], key=lambda z: z[1], reverse=True))
 
@@ -147,7 +147,7 @@ class ArmAnalysis:
 
                     arms[row][col] = Polygon(down), Polygon(right), Polygon(left)
 
-                elif dir == 1: # 2 arms
+                elif cell_dir == 1: # 2 arms
                     up = sorted([point for point in all_pts if point[1] < center[1] and point[0] < center[0]], key=lambda z: z[1])
                     up.extend(sorted([point for point in all_pts if point[1] < center[1] and point[0] > center[0]], key=lambda z: z[1], reverse=True))
 
@@ -175,7 +175,7 @@ class ArmAnalysis:
 
                     arms[row][col] = Polygon(up), Polygon(right), Polygon(left)
 
-                elif dir == 2:  # 2 arms R
+                elif cell_dir == 2:  # 2 arms R
                     left = sorted([point for point in all_pts if point[0] < center[0] and point[1] < center[1]], key=lambda z: z[0])
                     left.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] > center[1]], key=lambda z:z[0], reverse=True))
 
@@ -184,7 +184,7 @@ class ArmAnalysis:
                         if point[0] > center[0]:
                             up.append(np.array(point))
                     for point in tri:
-                        if (point[0] < center[0] and point[1] < center[1]):
+                        if point[0] < center[0] and point[1] < center[1]:
                             up.append(np.array(point))
 
                     up.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] < center[1] and not self.point_in_arr(up, point)], key=lambda z: z[0]))
@@ -194,13 +194,13 @@ class ArmAnalysis:
                         if point[0] > center[0]:
                             below.append(np.array(point))
                     for point in tri:
-                        if (point[0] < center[0] and point[1] > center[1]):
+                        if point[0] < center[0] and point[1] > center[1]:
                             below.append(np.array(point))
 
                     below.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] > center[1] and not self.point_in_arr(below, point)], key=lambda z: z[0]))
 
                     arms[row][col] = Polygon(left), Polygon(up), Polygon(below)
-                elif dir == 3: # 2 arms L
+                elif cell_dir == 3: # 2 arms L
                     pass
         return arms
 
@@ -233,8 +233,8 @@ class ArmAnalysis:
         if pt.within(poly):
             return None
 
-        dir = self.cell_direction[row][col]
-        if dir == 0: #U
+        cell_dir = self.cell_direction[row][col]
+        if cell_dir == 0: #U
             down, right, left = self.arms[row][col]
             if pt.within(down):
                 return 1
@@ -242,7 +242,7 @@ class ArmAnalysis:
                 return 0
             elif pt.within(left):
                 return 2
-        elif dir == 1: #D
+        elif cell_dir == 1: #D
             up, right, left = self.arms[row][col]
             if pt.within(up):
                 return 2
@@ -250,7 +250,7 @@ class ArmAnalysis:
                 return 0
             elif pt.within(left):
                 return 1
-        elif dir == 2: #R
+        elif cell_dir == 2: #R
             left, up, below = self.arms[row][col]
             if pt.within(left):
                 return 2
@@ -260,7 +260,7 @@ class ArmAnalysis:
                 return 1
             else:
                 return -1
-        elif dir == 3: #L
+        elif cell_dir == 3: #L
             if pos_x - self.y_centers[row][col][0] > 0:  # right side of y
                 return 0
             elif pos_y - self.y_centers[row][col][1] > 0:  # top
