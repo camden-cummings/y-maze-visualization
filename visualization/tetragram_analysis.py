@@ -8,17 +8,13 @@ from visualization.helpers.generate_row_col import generate_row_col
 
 class TetragramAnalysis:
     """"""
-    def __init__(self, tracked_csv_filename, labels, shape_of_rows, arm_analysis, arm_output_filepath=None, output_filepath=None):
-        self.labels = labels
+    def __init__(self, df, shape_of_rows, arm_analysis, arm_output_filepath=None, output_filepath=None):
         self.shape_of_rows = shape_of_rows
         self.arm_analysis = arm_analysis
-        self.turn_map = self.create_turn_map(tracked_csv_filename, arm_output_filepath, output_filepath)
+        self.turn_map = self.create_turn_map(df, arm_output_filepath, output_filepath)
 
-    def create_turn_map(self, tracked_csv_filename: str, arm_output_filepath=None, output_filepath=None):
+    def create_turn_map(self, df, arm_output_filepath=None, output_filepath=None):
         """Create turn map (LRLRRL..) based on arm turns."""
-
-        df = pd.read_csv(tracked_csv_filename)
-        df.head()
 
         num_of_ys = sum(self.shape_of_rows)
         num_rows = len(self.shape_of_rows)
@@ -126,6 +122,24 @@ class TetragramAnalysis:
         return arm_list, just_the_hits_arm_list
 
     @staticmethod
+    def turn_l_r(prev_arm: int, curr_arm: int) -> str:
+        """Decides if moving from previous arm to current arm was turning left or turning right."""
+        if prev_arm == curr_arm:
+            return ""
+
+        if (prev_arm, curr_arm) == (0, 2):
+            return "R"
+
+        elif (prev_arm, curr_arm) == (2, 0):
+            return "L"
+
+        elif prev_arm > curr_arm:
+            return "R"
+
+        else:
+            return "L"
+
+    @staticmethod
     def spontaneous_alternation_percent(l):
         """Calculates the spontaneous alternation percent for a given pattern."""
         if len(l) == 0:
@@ -163,29 +177,12 @@ class TetragramAnalysis:
         return grouped
 
     @staticmethod
-    def turn_l_r(prev_arm: int, curr_arm: int) -> str:
-        """Decides if moving from previous arm to current arm was turning left or turning right."""
-        if prev_arm == curr_arm:
-            return ""
-
-        if (prev_arm, curr_arm) == (0, 2):
-            return "R"
-
-        elif (prev_arm, curr_arm) == (2, 0):
-            return "L"
-
-        elif prev_arm > curr_arm:
-            return "R"
-
-        else:
-            return "L"
-
-    def count(self, sets_of_four):
+    def count(sets_of_four, labels):
         """Count tetragrams and create percentage of each kind of tetragram."""
         counter = Counter(sets_of_four)
-        combin_counter = {l: 0 for l in self.labels}
+        combin_counter = {l: 0 for l in labels}
 
-        for l in self.labels:
+        for l in labels:
             for val in counter.keys():
                 if val in l:
                     combin_counter[l] += counter[val]
@@ -194,6 +191,6 @@ class TetragramAnalysis:
             percent = 100 * np.array(list(combin_counter.values())
                                      ) / sum(combin_counter.values())
         else:
-            percent = np.array([0 for i in range(len(self.labels))], dtype=np.float64)
+            percent = np.array([0 for i in range(len(labels))], dtype=np.float64)
 
         return percent
