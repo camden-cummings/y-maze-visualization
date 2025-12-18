@@ -16,13 +16,13 @@ def find_all_videos_for_tracking(path=None, ext="avi"):
 
     return files_to_read
 
-def find_all_files(path=None, extension="", exclude=[]):
+def find_all_files(path=None, ext="", exclude=[]):
     """Finds all files of a given extension type, starting from either current
     working directory or given path."""
     if path is None:
         path = os.getcwd()
 
-    extension = extension.replace('.', '')
+    ext = ext.replace('.', '')
     
     if path[-1] == "/":
         path = path[:-1]
@@ -30,7 +30,7 @@ def find_all_files(path=None, extension="", exclude=[]):
     files_to_read = []
     for ex in os.walk(path):
         for filename in ex[2]:
-            if filename.split('.')[-1] == extension and (len(exclude) == 0 or not excluded(exclude, filename)):
+            if (filename.split('.')[-1] == ext or ext == "") and (len(exclude) == 0 or not excluded(exclude, filename)):
                 files_to_read.append(ex[0] + "/" + filename)
 
     return files_to_read
@@ -42,14 +42,14 @@ def excluded(exclude, filename):
     
     return False
     
-def find_all_files_by_directory(path=None, extension=""):
+def find_all_files_by_directory(path=None, ext=""):
     if path is None:
         path = os.getcwd()
 
     files_to_read = []
     for ex in os.walk(path):
         for filename in ex[2]:
-            if extension in filename:
+            if ext in filename:
                 files_to_read.append(ex[0] + "/" + filename)
 
     files_to_read.sort(key=lambda fn: fn.split("-")[-3])

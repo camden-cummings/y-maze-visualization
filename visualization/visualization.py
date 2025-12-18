@@ -82,7 +82,7 @@ class Visualization:
         plt.savefig(filepath)
         plt.show()
 
-    def indiv_bar_graph(self, percent, filepath, row, col, age=None, num_of_tetragrams=None):
+    def indiv_bar_graph(self, percent, save_fp, row, col, age=None, num_of_tetragrams=None):
         """Individual bar graph."""
         _, ax = plt.subplots(layout='constrained', figsize=(9, 3))
 
@@ -106,7 +106,7 @@ class Visualization:
         ax.bar(np.arange(0, len(self.labels)), percent, 0.1)
 
         #plt.show() # uncomment to show as program is run
-        plt.savefig(filepath)
+        plt.savefig(save_fp)
         plt.close()
 
     def paired_tetragram_bar(self, turn_maps: dict, sample_size: dict):
@@ -149,7 +149,7 @@ class Visualization:
         ax.set_ylim(0, 100)
         plt.show()
 
-    def paired_tetragram_bar_percent(self, percent: dict, sample_size: dict, filepath):
+    def paired_tetragram_bar_percent(self, percent: dict, sample_size: dict, save_fp):
         """Paired tetragram bar graph."""
 
         width = 0.1  # the width of the bars
@@ -178,7 +178,7 @@ class Visualization:
 
         ax.legend(loc='upper left')
         ax.set_ylim(0, 100)
-        plt.savefig(filepath)
+        plt.savefig(save_fp)
         plt.close()
 #        plt.show()
 
