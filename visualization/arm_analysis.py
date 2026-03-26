@@ -5,7 +5,7 @@ import math
 
 from shapely.geometry import Point, Polygon
 
-from visualization.helpers.generate_row_col import generate_row_col
+from .helpers.generate_row_col import generate_row_col
 
 class ArmAnalysis:
     def __init__(self, y_contours, y_centers, shape_of_rows):
@@ -106,7 +106,7 @@ class ArmAnalysis:
         else:
             return False
 
-    def find_all_arms(self, triangles, cell_directions): # TODO: do this as TSP instead
+    def find_all_arms(self, triangles, cell_directions):
         arms = [[[] for col in range(self.shape_of_rows[row])] for row in range(len(self.shape_of_rows))]
         for row in range(len(self.shape_of_rows)):
             for col in range(self.shape_of_rows[row]):
@@ -151,27 +151,27 @@ class ArmAnalysis:
                     up = sorted([point for point in all_pts if point[1] < center[1] and point[0] < center[0]], key=lambda z: z[1])
                     up.extend(sorted([point for point in all_pts if point[1] < center[1] and point[0] > center[0]], key=lambda z: z[1], reverse=True))
 
-                    right = []
-                    for point in tri:
-                        if point[1] > center[1]:
-                            right.append(np.array(point))
-
-                    for point in tri:
-                        if point[0] < center[0] and point[1] < center[1]:
-                            right.append(np.array(point))
-
-                    right.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] > center[1] and not self.point_in_arr(right, point)], key=lambda z:z[1]))
-
                     left = []
                     for point in tri:
                         if point[1] > center[1]:
                             left.append(np.array(point))
 
                     for point in tri:
-                        if point[0] > center[0] and point[1] < center[1]:
+                        if point[0] < center[0] and point[1] < center[1]:
                             left.append(np.array(point))
 
-                    left.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] > center[1]], key=lambda z:z[1]))
+                    left.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] > center[1] and not self.point_in_arr(left, point)], key=lambda z:z[1]))
+
+                    right = []
+                    for point in tri:
+                        if point[1] > center[1]:
+                            right.append(np.array(point))
+
+                    for point in tri:
+                        if point[0] > center[0] and point[1] < center[1]:
+                            right.append(np.array(point))
+
+                    right.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] > center[1]], key=lambda z:z[1]))
 
                     arms[row][col] = Polygon(up), Polygon(right), Polygon(left)
 
@@ -201,7 +201,30 @@ class ArmAnalysis:
 
                     arms[row][col] = Polygon(left), Polygon(up), Polygon(below)
                 elif cell_dir == 3: # 2 arms L
-                    pass
+                    right = sorted([point for point in all_pts if point[0] > center[0] and point[1] < center[1]], key=lambda z: z[0])
+                    right.extend(sorted([point for point in all_pts if point[0] > center[0] and point[1] > center[1]], key=lambda z:z[0], reverse=True))
+
+                    up = []
+                    for point in tri:
+                        if point[0] < center[0]:
+                            up.append(np.array(point))
+                    for point in tri:
+                        if point[0] > center[0] and point[1] < center[1]:
+                            up.append(np.array(point))
+
+                    up.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] < center[1] and not self.point_in_arr(up, point)], key=lambda z: z[0]))
+
+                    below = []
+                    for point in tri:
+                        if point[0] < center[0]:
+                            below.append(np.array(point))
+                    for point in tri:
+                        if point[0] > center[0] and point[1] > center[1]:
+                            below.append(np.array(point))
+
+                    below.extend(sorted([point for point in all_pts if point[0] < center[0] and point[1] > center[1] and not self.point_in_arr(below, point)], key=lambda z: z[0]))
+                    arms[row][col] = Polygon(right), Polygon(up), Polygon(below)
+
         return arms
 
     def convert_to_arm(self, pos_x: int, pos_y: int, row: int, col: int):
@@ -237,35 +260,34 @@ class ArmAnalysis:
         if cell_dir == 0: #U
             down, right, left = self.arms[row][col]
             if pt.within(down):
-                return 1
-            elif pt.within(right):
                 return 0
-            elif pt.within(left):
+            elif pt.within(right):
                 return 2
+            elif pt.within(left):
+                return 1
         elif cell_dir == 1: #D
             up, right, left = self.arms[row][col]
             if pt.within(up):
-                return 2
-            elif pt.within(right):
                 return 0
-            elif pt.within(left):
+            elif pt.within(right):
                 return 1
+            elif pt.within(left):
+                return 2
         elif cell_dir == 2: #R
             left, up, below = self.arms[row][col]
             if pt.within(left):
-                return 2
-            elif pt.within(up):
                 return 0
+            elif pt.within(up):
+                return 1
+            elif pt.within(below):
+                return 2
+        elif cell_dir == 3: #L
+            right, up, below = self.arms[row][col]
+            if pt.within(right):  # right side of y
+                return 0
+            elif pt.within(up):  # top
+                return 2
             elif pt.within(below):
                 return 1
-            else:
-                return -1
-        elif cell_dir == 3: #L
-            if pos_x - self.y_centers[row][col][0] > 0:  # right side of y
-                return 0
-            elif pos_y - self.y_centers[row][col][1] > 0:  # top
-                return 1
-            else:
-                return 2
 
         return None

@@ -4,7 +4,7 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from visualization.helpers.generate_row_col import generate_row_col
+from .helpers.generate_row_col import generate_row_col
 
 class TetragramAnalysis:
     """"""
@@ -77,22 +77,6 @@ class TetragramAnalysis:
 
         return turn_map
 
-    """
-    @staticmethod
-    def match_threes(l):
-        # Pair set of movements into each arm into sets of three, i.e.
-        # if there are 4 arms and 012302 is the string, will produce
-        # (012, 123, 230, 302).
-
-        
-        sets_of_three = []
-
-        for i in range(0, len(l) - 2):
-            sets_of_three.append(l[i:i+3])
-
-        return sets_of_three
-    """
-
     def create_arm_list(self, output_filepath: str):
         """Like mice data, w/ % spontaneous alternation instead of tetragrams."""
         df = pd.read_csv(output_filepath)
@@ -122,8 +106,20 @@ class TetragramAnalysis:
         return arm_list, just_the_hits_arm_list
 
     @staticmethod
+
+    @staticmethod
     def turn_l_r(prev_arm: int, curr_arm: int) -> str:
         """Decides if moving from previous arm to current arm was turning left or turning right."""
+
+        def check_int(possible_int):
+            if not isinstance(possible_int, int):
+                return int(possible_int)
+            else:
+                return possible_int
+
+        prev_arm = check_int(prev_arm)
+        curr_arm = check_int(curr_arm)
+
         if prev_arm == curr_arm:
             return ""
 
@@ -153,18 +149,12 @@ class TetragramAnalysis:
         return (len(l) - count) / len(l)
 
     @staticmethod
-    def match(turn_map_indiv, number_of_divisions):
+    def match(turns, num_of_divisions=4):
         """
         Pair set of movements into sets of number_of_divisions, i.e. if number_of_divisions is
         3, and LRLLRL is the string, will produce (LRL, RLL, LLR, LRL).
         """
-
-        grouped = []
-
-        for i in range(0, len(turn_map_indiv) - (number_of_divisions - 1)):
-            grouped.append(turn_map_indiv[i:i + number_of_divisions])
-
-        return grouped
+        return [''.join(turns[i:i + num_of_divisions]) for i in range(len(turns) - num_of_divisions - 1)]
 
     def match_for_row_and_col(self, turn_map, number_of_divisions):
         """Run match for each of the cells."""
@@ -184,6 +174,7 @@ class TetragramAnalysis:
 
         for l in labels:
             for val in counter.keys():
+#                print(val, l)
                 if val in l:
                     combin_counter[l] += counter[val]
 

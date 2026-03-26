@@ -17,13 +17,14 @@ class Visualization:
         self.NUMBER_OF_DIVISIONS = number_of_divisions
         self.colours = self.defn_colours(age_list, cmap_name)
 
-    def defn_colours(self, strs_to_be_given_colours: list[str], cmap_name: str) -> dict:
+    @staticmethod
+    def defn_colours(strs_to_be_given_colours: list[str], cmap_name: str) -> dict:
         """Take in a list of keys, and defines a colour for each of them."""
         cmap = plt.get_cmap(cmap_name)
 
         if len(strs_to_be_given_colours) > 0:
             colours = {}
-            rescaled_colours = self.rescale([int(re.findall(r'[1-9]+', n)[0])
+            rescaled_colours = __class__.rescale([int(re.findall(r'[1-9]+', n)[0])
                                              for n in strs_to_be_given_colours])
     
             num_of_colours = len(strs_to_be_given_colours)
