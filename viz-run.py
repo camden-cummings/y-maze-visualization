@@ -21,7 +21,7 @@ header = data_fp.split(".")[0]
 cell_fp = f"{header[:-len('post-processed')]}.cells"
 arm_save_fp = f"{header[:-len('post-processed')]}_arm_save.csv"
 save_fp =  f"{header[:-len('post-processed')]}_save.csv"
-cell_contours, cell_centers, shape_of_rows = convert_to_contours(cell_fp)
+cell_contours, cell_centers, cell_bounds, shape_of_rows = convert_to_contours(cell_fp)
 arm_analysis = ArmAnalysis(cell_contours, cell_centers, shape_of_rows)
 
 df = pd.read_csv(data_fp)
