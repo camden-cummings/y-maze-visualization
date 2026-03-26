@@ -24,7 +24,7 @@ save_fp =  f"{header[:-len('post-processed')]}_save.csv"
 cell_contours, cell_centers, shape_of_rows = convert_to_contours(cell_fp)
 arm_analysis = ArmAnalysis(cell_contours, cell_centers, shape_of_rows)
 
-df = pd.read_csv(arm_save_fp)
+df = pd.read_csv(data_fp)
 df.head()
 
 tetr = TetragramAnalysis(df, shape_of_rows, arm_analysis, arm_save_fp, save_fp)
